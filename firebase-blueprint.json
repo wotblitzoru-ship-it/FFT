@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "Budget": {
+      "title": "Budget",
+      "description": "A family budget space",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the budget" },
+        "name": { "type": "string", "description": "Human readable name of the family budget" },
+        "createdBy": { "type": "string", "description": "The creator user UID" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of last update" },
+        "categories": { "type": "object", "description": "Map of category name to numerical limit" },
+        "members": { "type": "array", "description": "List of user UIDs who have access" }
+      },
+      "required": ["id", "name", "createdBy", "createdAt", "updatedAt", "categories", "members"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A single financial transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the transaction" },
+        "budgetId": { "type": "string", "description": "Reference to the budget ID" },
+        "amount": { "type": "number", "description": "Transaction amount" },
+        "category": { "type": "string", "description": "The category of this transaction" },
+        "description": { "type": "string", "description": "Optional description" },
+        "type": { "type": "string", "enum": ["expense", "income"], "description": "Type of transaction" },
+        "date": { "type": "string", "description": "The physical date of transaction in YYYY-MM-DD" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Audit creation timestamp" },
+        "createdBy": { "type": "string", "description": "User UID who recorded the transaction" },
+        "createdByName": { "type": "string", "description": "Display name of the user who recorded" }
+      },
+      "required": ["id", "budgetId", "amount", "category", "type", "date", "createdAt", "createdBy"]
+    },
+    "Reminder": {
+      "title": "Reminder",
+      "description": "A recurring payment reminder",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the reminder" },
+        "budgetId": { "type": "string", "description": "Reference to the budget ID" },
+        "title": { "type": "string", "description": "Title of the recurring payment" },
+        "amount": { "type": "number", "description": "Due amount" },
+        "category": { "type": "string", "description": "Category for the payment" },
+        "dueDay": { "type": "number", "description": "Day of the month for payment (1-31)" },
+        "lastPaidMonth": { "type": "string", "description": "The last month-year (YYYY-MM) this was paid" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "createdBy": { "type": "string", "description": "User UID who created this reminder" }
+      },
+      "required": ["id", "budgetId", "title", "amount", "category", "dueDay", "createdAt", "createdBy"]
+    }
+  },
+  "firestore": {
+    "/budgets/{budgetId}": {
+      "schema": "Budget",
+      "description": "Family budget spaces"
+    },
+    "/budgets/{budgetId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Transactions belonging to a specific budget"
+    },
+    "/budgets/{budgetId}/reminders/{reminderId}": {
+      "schema": "Reminder",
+      "description": "Payment reminders belonging to a specific budget"
+    }
+  }
+}

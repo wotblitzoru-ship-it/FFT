@@ -1,0 +1,8 @@
+{
+  "name": "Family Finance Tracker",
+  "description": "Приложение для ведения учета семейных финансов с разделением бюджета по категориям, реальной синхронизацией, лимитами расходов, уведомлениями, напоминаниями о регулярных платежах и экспортом отчетов в CSV и PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    match /budgets/{budgetId} {
+      allow get: if isSignedIn() && (request.auth.uid in existing().members);
+      allow list: if isSignedIn() && (request.auth.uid in existing().members);
+      
+      allow create: if isSignedIn() 
+        && isValidId(budgetId) 
+        && incoming().id == budgetId 
+        && incoming().createdBy == request.auth.uid 
+        && (request.auth.uid in incoming().members)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && incoming().name is string && incoming().name.size() <= 100
+        && incoming().categories is map;
+        
+      allow update: if isSignedIn()
+        && (request.auth.uid in existing().members)
+        && incoming().id == existing().id
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().name is string && incoming().name.size() <= 100
+        && incoming().categories is map
+        && incoming().members is list;
+
+      allow delete: if isSignedIn()
+        && existing().createdBy == request.auth.uid;
+
+      match /transactions/{transactionId} {
+        allow get: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/budgets/$(budgetId)).data.members);
+        allow list: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/budgets/$(budgetId)).data.members);
+        
+        allow create: if isSignedIn()
+          && isValidId(transactionId)
+          && (request.auth.uid in get(/databases/$(database)/documents/budgets/$(budgetId)).data.members)
+          && incoming().id == transactionId
+          && incoming().budgetId == budgetId
+          && incoming().createdBy == request.auth.uid
+          && incoming().amount is number
+          && incoming().category is string && incoming().category.size() <= 100
+          && incoming().type in ['expense', 'income']
+          && incoming().date is string && incoming().date.size() == 10
+          && incoming().createdAt == request.time;
+
+        allow update: if isSignedIn()
+          && (request.auth.uid in get(/databases/$(database)/documents/budgets/$(budgetId)).data.members)
+          && incoming().id == existing().id
+          && incoming().budgetId == existing().budgetId
+          && incoming().createdBy == existing().createdBy
+          && incoming().createdAt == existing().createdAt
+          && incoming().amount is number
+          && incoming().category is string && incoming().category.size() <= 100
+          && incoming().type in ['expense', 'income']
+          && incoming().date is string && incoming().date.size() == 10;
+
+        allow delete: if isSignedIn()
+          && (request.auth.uid in get(/databases/$(database)/documents/budgets/$(budgetId)).data.members);
+      }
+
+      match /reminders/{reminderId} {
+        allow get: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/budgets/$(budgetId)).data.members);
+        allow list: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/budgets/$(budgetId)).data.members);
+
+        allow create: if isSignedIn()
+          && isValidId(reminderId)
+          && (request.auth.uid in get(/databases/$(database)/documents/budgets/$(budgetId)).data.members)
+          && incoming().id == reminderId
+          && incoming().budgetId == budgetId
+          && incoming().createdBy == request.auth.uid
+          && incoming().title is string && incoming().title.size() <= 200
+          && incoming().amount is number
+          && incoming().category is string && incoming().category.size() <= 100
+          && incoming().dueDay is number && incoming().dueDay >= 1 && incoming().dueDay <= 31
+          && incoming().createdAt == request.time;
+
+        allow update: if isSignedIn()
+          && (request.auth.uid in get(/databases/$(database)/documents/budgets/$(budgetId)).data.members)
+          && incoming().id == existing().id
+          && incoming().budgetId == existing().budgetId
+          && incoming().createdBy == existing().createdBy
+          && incoming().createdAt == existing().createdAt
+          && incoming().title is string && incoming().title.size() <= 200
+          && incoming().amount is number
+          && incoming().category is string && incoming().category.size() <= 100
+          && incoming().dueDay is number && incoming().dueDay >= 1 && incoming().dueDay <= 31;
+
+        allow delete: if isSignedIn()
+          && (request.auth.uid in get(/databases/$(database)/documents/budgets/$(budgetId)).data.members);
+      }
+    }
+  }
+}
